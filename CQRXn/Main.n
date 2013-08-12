@@ -41,7 +41,7 @@ module Program
         
         def output = CQRX.Nemerle.Blocks.ToString(CQRX.Nemerle.Blocks.Accumulate(source::code))
         
-        def sw = StreamWriter("..\\..\\..\\CQRXn_DEMO\\demo.n")
+        def sw = StreamWriter("..\\..\\..\\CQRXn_DEMO\\demo._g_.n")
         sw.WriteLine(output)
         sw.Dispose()
         

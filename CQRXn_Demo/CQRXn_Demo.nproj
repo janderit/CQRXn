@@ -64,7 +64,7 @@
     </MacroReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="demo.n">
+    <Compile Include="demo._g_.n">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Main.n" />
