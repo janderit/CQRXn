@@ -12,11 +12,11 @@ namespace CQRX
 
     public abstract class Event {}
     
-    
+    public type History = list[Event]
     
     public module Projections
     
-        public RunningAggregation[T](history:list[Event], initial: T, modification: T*Event->T) : T
+        public RunningAggregation[T](history:History, initial: T, modification: T*Event->T) : T
             def handle(events, state)
                 match (events)
                     | [] => state

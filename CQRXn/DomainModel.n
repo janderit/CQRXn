@@ -1,0 +1,33 @@
+﻿#pragma indent
+
+using CQRX.Structure
+
+module DomainModel
+    
+    public Load(): list[Module]
+    
+        def cart = Module("Cart", 
+            [
+                Event("ProductWasAdded", "Product was added to cart", [EventField("product_id", "Number"), EventField("product_name", "Text")]), 
+                Event("ProductWasRemoved", "Product was removed from cart", [EventField("product_id", "Number")])
+            ], 
+            [
+                Record("ProductInfo", [RecordField("Id", "Id"), RecordField("Name","Text")])
+            ], 
+            [
+                Concept("Count", "Number", Expression.Aggregation(AggregationDefinition(
+                    Expression.Constant("0"), [
+                    ProjectionExpression("ProductWasAdded", Expression.Inc()), 
+                    ProjectionExpression("ProductWasRemoved", Expression.Dec())]))),
+                    
+                Concept("Empty", "Logic", Expression.IsEqual(Expression.Concept("Count") ,Expression.Constant("0"))),
+                
+                Concept("Products", "ProductInfo+", Expression.Aggregation(AggregationDefinition(
+                    Expression.EmptyList(),[
+                    ProjectionExpression("ProductWasAdded", Expression.AddList()),
+                    ProjectionExpression("ProductWasRemoved",),
+                    ])))
+            ])
+            
+    
+        [cart]

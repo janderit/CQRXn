@@ -59,6 +59,9 @@
     </MacroReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DomainModel.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Main.n" />
     <Compile Include="Properties\AssemblyInfo.n" />
     <Compile Include="_XmlParser.n">

@@ -24,6 +24,7 @@ namespace CQRX.Models
             [
              TypeInfo("String", "System.String"),
              TypeInfo("Text", "System.String"),
+             TypeInfo("Logic", "System.Boolean"),
              TypeInfo("Guid", "System.Guid"),
              TypeInfo("Id", "System.Guid"),
              TypeInfo("Number", "System.Int32"),
@@ -42,6 +43,8 @@ namespace CQRX.Models
         Expression(e: Expression): Nemerle.Expression
             match (e)
                 | e is Expression.Constant => Nemerle.Expression.Constant(e.Value)
+                | e is Expression.IsEqual => Nemerle.Expression.BinaryOperator(Expression(e.Left), "==", Expression(e.Right))
+                | e is Expression.Concept => Nemerle.Expression.MethodInvocation(e.Name, ["history"])
                 | e is Expression.Inc => Nemerle.Expression.BinaryOperator(Nemerle.Expression.Constant("s"), "+", Nemerle.Expression.Constant("1"))
                 | e is Expression.Dec => Nemerle.Expression.BinaryOperator(Nemerle.Expression.Constant("s"), "-", Nemerle.Expression.Constant("1"))
                 | e is Expression.Aggregation => 
@@ -50,6 +53,7 @@ namespace CQRX.Models
                         Nemerle.Expression.DefFn("step", ["s","e"], Nemerle.Expression.Match("e",e.Definition.Projection.Map(Translate))),
                         Nemerle.Expression.MethodInvocation("CQRX.Projections.RunningAggregation", ["history", "init", "step"])                        
                     ])
+                | _ => Nemerle.Expression.CompilerFailure("UNKNOWN: "+e.ToString())
                     
         EventFieldProperty(f: EventField): Nemerle.NemerleProperty
             Nemerle.NemerleProperty(f.Name, TypeSystem.ClrPropertyType(f.Type))
@@ -64,7 +68,7 @@ namespace CQRX.Models
             Nemerle.Language.RecordStruct(r.Name, r.Fields.Map(RecordFieldProperty), [])
             
         public ConceptProjector(c:Concept): Nemerle.Block
-            Nemerle.Language.GlobalFunction(c.Name, TypeSystem.ClrPropertyType(c.Type), [Nemerle.Parameter("history","list[CQRX.Event]")], Expression(c.Expression))            
+            Nemerle.Language.GlobalFunction(c.Name, TypeSystem.ClrPropertyType(c.Type), [Nemerle.Parameter("history","CQRX.History")], Expression(c.Expression))            
 
 
             

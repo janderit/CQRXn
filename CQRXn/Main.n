@@ -18,21 +18,8 @@ module Program
 
     Main() : void
     
-        def cart = Module("Cart", 
-            [
-                Event("ProductWasAdded", "Product was added to cart", [EventField("product_id", "Number"), EventField("product_name", "Text")]), 
-                Event("ProductWasRemoved", "Product was removed from cart", [EventField("product_id", "Number")])
-            ], 
-            [
-                Record("ProductInfo", [RecordField("Id", "Id"), RecordField("Name","Text")])
-            ], 
-            [
-                Concept("Count", "Number", Expression.Aggregation(AggregationDefinition(Expression.Constant("0"), [
-                                                                    ProjectionExpression("ProductWasAdded", Expression.Inc()), 
-                                                                    ProjectionExpression("ProductWasRemoved", Expression.Dec())])))
-            ])
-            
-        def model = [cart]
+           
+        def model = DomainModel.Load()
         
         def source = CQRX.Nemerle.Language.NemerleSourceFile()
         def code = model.Single().Events.Map(CQRX.Models.EventSourcing.EventRecord) \

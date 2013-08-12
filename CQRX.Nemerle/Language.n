@@ -51,6 +51,7 @@ namespace CQRX.Nemerle
         | DefFn { Identifier: NemerleIdentifier; Parameters: list[NemerleIdentifier]; Bind : Expression }
         | Match { Identifier : NemerleIdentifier; Matches : list[MatchCondition] }
         | BinaryOperator { Left : Expression; Operator: String; Right: Expression }
+        | CompilerFailure { Message : String } 
         
     [Record] public struct MatchCondition
         public Condition : NemerleType
@@ -126,4 +127,5 @@ namespace CQRX.Nemerle
                 def lhs = RenderExpression(e.Left).SingleLine()
                 def rhs = RenderExpression(e.Right).SingleLine()
                 Block([$"$(lhs) $(e.Operator) $(rhs)"],[],false)
+              | e is Expression.CompilerFailure => Block([$"/* FAILED: $(e.Message) */"],[],false)
               | _ => Block([$"/* UNKNOWN: $(e) */"],[],false)

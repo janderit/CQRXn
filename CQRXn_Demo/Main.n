@@ -1,4 +1,6 @@
-﻿using Nemerle.Collections;
+﻿#pragma indent
+
+using Nemerle.Collections;
 using Nemerle.Text;
 using Nemerle.Utility;
 
@@ -9,6 +11,51 @@ using System.Linq;
 using System.Xml;
 using System.IO;
 using System.Xml.Serialization;
+using FluentAssertions;
+
+using NUnit.Framework;
+
+using CQRX;
+
+
+[TestFixture] public class Tests
+    
+
+    An_empty_cart():History
+        []
+        
+    A_cart_with_one_product():History
+        An_empty_cart() + [ProductWasAdded(1, "Äpfel")]
+        
+    A_nonempty_cart():History        
+        A_cart_with_one_product()
+        
+    A_cart_with_two_products():History
+        A_cart_with_one_product() + [ProductWasAdded(2, "Bananen")]
+        
+    A_cart_with_one_product_after_removal():History
+        A_cart_with_two_products() + [ProductWasRemoved(2)]
+       
+    
+    
+    [Test] public The_Count_of_An_empty_cart_should_be_0():void 
+        _ = Cart.Count(An_empty_cart()).Should().Be(0, "", [])
+        
+    [Test] public The_Count_of_A_cart_with_one_product_should_be_1():void
+        _ = Cart.Count(A_cart_with_one_product()).Should().Be(1, "", [])
+        
+    [Test] public The_Count_of_A_cart_with_two_products_should_be_2():void
+        _ = Cart.Count(A_cart_with_two_products()).Should().Be(2, "", [])
+        
+    [Test] public The_Count_of_A_cart_with_one_product_after_removal_should_be_1():void
+        _ = Cart.Count(A_cart_with_one_product_after_removal()).Should().Be(1, "", [])
+        
+    [Test] public Empty_of_An_empty_cart_should_be_true():void 
+        _ = Cart.Empty(An_empty_cart()).Should().Be(true, "", [])        
+        
+    [Test] public Empty_of_A_nonempty_cart_should_be_false():void 
+        _ = Cart.Empty(A_nonempty_cart()).Should().Be(false, "", [])                
+    
 
 
 

@@ -18,9 +18,11 @@ namespace CQRX.Structure
         public Expression : Expression
         
     public variant Expression
+        | Constant { Value : string }
+        | IsEqual { Left: Expression; Right: Expression }
+        | Concept { Name: String }
         | Inc
         | Dec
-        | Constant { Value : string }
         | Aggregation { Definition : AggregationDefinition }
         
     [Record] public struct AggregationDefinition
