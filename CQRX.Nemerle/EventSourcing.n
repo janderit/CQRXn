@@ -1,0 +1,70 @@
+﻿#pragma indent
+
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+using CQRX.Structure
+
+
+namespace CQRX.Models
+
+    [Record] public struct TypeInfo
+        public Name: string
+        public ClrType: Nemerle.NemerleType
+        
+
+    public module TypeSystem
+        
+        Basetypes() : list[TypeInfo]
+            [
+             TypeInfo("String", "System.String"),
+             TypeInfo("Text", "System.String"),
+             TypeInfo("Guid", "System.Guid"),
+             TypeInfo("Id", "System.Guid"),
+             TypeInfo("Number", "System.Int32"),
+             TypeInfo("Euro", "System.Decimal")
+            ]
+    
+        public ClrPropertyType(typeinfo: string) : Nemerle.NemerleType
+            Basetypes().Filter(t=>t.Name==typeinfo).Map(_.ClrType).SingleOrDefault()
+            
+    
+    public module EventSourcing
+    
+        Translate(e: ProjectionExpression): Nemerle.MatchCondition
+            Nemerle.MatchCondition(e.OnEvent, Expression(e.Modification))
+    
+        Expression(e: Expression): Nemerle.Expression
+            match (e)
+                | e is Expression.Constant => Nemerle.Expression.Constant(e.Value)
+                | e is Expression.Inc => Nemerle.Expression.BinaryOperator(Nemerle.Expression.Constant("s"), "+", Nemerle.Expression.Constant("1"))
+                | e is Expression.Dec => Nemerle.Expression.BinaryOperator(Nemerle.Expression.Constant("s"), "-", Nemerle.Expression.Constant("1"))
+                | e is Expression.Aggregation => 
+                    Nemerle.Expression.Sequence([
+                        Nemerle.Expression.Def("init", Expression(e.Definition.Initial)),
+                        Nemerle.Expression.DefFn("step", ["s","e"], Nemerle.Expression.Match("e",e.Definition.Projection.Map(Translate))),
+                        Nemerle.Expression.MethodInvocation("CQRX.Projections.RunningAggregation", ["history", "init", "step"])                        
+                    ])
+                    
+        EventFieldProperty(f: EventField): Nemerle.NemerleProperty
+            Nemerle.NemerleProperty(f.Name, TypeSystem.ClrPropertyType(f.Type))
+            
+        RecordFieldProperty(f: RecordField): Nemerle.NemerleProperty
+            Nemerle.NemerleProperty(f.Name, TypeSystem.ClrPropertyType(f.Type))            
+    
+        public EventRecord(e: Event): Nemerle.Block
+            Nemerle.Language.RecordClass(e.Name, ["CQRX.Event"], e.Fields.Map(EventFieldProperty), ["// event "+e.Description])
+            
+        public DataRecord(r: Record): Nemerle.Block
+            Nemerle.Language.RecordStruct(r.Name, r.Fields.Map(RecordFieldProperty), [])
+            
+        public ConceptProjector(c:Concept): Nemerle.Block
+            Nemerle.Language.GlobalFunction(c.Name, TypeSystem.ClrPropertyType(c.Type), [Nemerle.Parameter("history","list[CQRX.Event]")], Expression(c.Expression))            
+
+
+            

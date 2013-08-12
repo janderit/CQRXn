@@ -1,0 +1,51 @@
+﻿#pragma indent
+
+using Nemerle.Collections
+using Nemerle.Text
+using Nemerle.Utility
+using Nemerle.Compiler
+
+using System
+using System.IO
+using System.Collections.Generic
+using System.Console
+using System.Linq
+using System.Xml.Linq
+
+using CQRX.Structure
+
+module Program
+
+    Main() : void
+    
+        def cart = Module("Cart", 
+            [
+                Event("ProductWasAdded", "Product was added to cart", [EventField("product_id", "Number"), EventField("product_name", "Text")]), 
+                Event("ProductWasRemoved", "Product was removed from cart", [EventField("product_id", "Number")])
+            ], 
+            [
+                Record("ProductInfo", [RecordField("Id", "Id"), RecordField("Name","Text")])
+            ], 
+            [
+                Concept("Count", "Number", Expression.Aggregation(AggregationDefinition(Expression.Constant("0"), [
+                                                                    ProjectionExpression("ProductWasAdded", Expression.Inc()), 
+                                                                    ProjectionExpression("ProductWasRemoved", Expression.Dec())])))
+            ])
+            
+        def model = [cart]
+        
+        def source = CQRX.Nemerle.Language.NemerleSourceFile()
+        def code = model.Single().Events.Map(CQRX.Models.EventSourcing.EventRecord) \
+                  +model.Single().Records.Map(CQRX.Models.EventSourcing.DataRecord) \
+                  +[CQRX.Nemerle.Language.Module(model.Single().Name, model.Single().Concepts.Map(CQRX.Models.EventSourcing.ConceptProjector))]
+        
+        def output = CQRX.Nemerle.Blocks.ToString(CQRX.Nemerle.Blocks.Accumulate(source::code))
+        
+        def sw = StreamWriter("..\\..\\..\\..\\CQRXn_DEMO\\CQRXn_DEMO\\demo.n")
+        sw.WriteLine(output)
+        sw.Dispose()
+        
+        Console.WriteLine(output)
+        
+        _ = ReadLine()
+    

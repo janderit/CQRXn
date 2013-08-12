@@ -1,0 +1,21 @@
+﻿#pragma indent
+
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace CQRX.Structure
+
+    [Record] public struct Module
+        public Name : string
+        public Events : list[Event]
+        public Records : list[Record]
+        public Concepts : list[Concept]
+        
+        public override ToString() : string
+            $"Module: '$(Name)'"
+            

@@ -1,0 +1,40 @@
+﻿#pragma indent
+
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace CQRX
+
+    public abstract class Event {}
+    
+    
+    
+    public module Projections
+    
+        public RunningAggregation[T](history:list[Event], initial: T, modification: T*Event->T) : T
+            def handle(events, state)
+                match (events)
+                    | [] => state
+                    | e::es => handle(es, modification(state, e))
+            handle(history, initial)
+        
+/*    
+        public SimpleAggregation[TAdd,TRem,TProd](events:list[Event], generator:TAdd->TProd, identity:TRem*TProd->bool) : list[TProd] where TAdd:Event where TRem:Event 
+           
+            def project(e : Event, plist) 
+                match (e)
+                    | e is TAdd => generator(e)::plist
+                    | e is TRem => plist.Filter(p => !identity(e,p)) 
+                    | _ => plist            
+           
+            def handle(events:list[Event], plist = [])
+                match (events)
+                    | [] => plist
+                    | e :: es => handle(es, project(e, plist))                
+           
+            handle(events)*/

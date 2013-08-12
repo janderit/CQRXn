@@ -1,0 +1,30 @@
+
+#pragma indent
+using System
+
+
+
+// event Product was added to cart
+[Record] public sealed class ProductWasAdded : CQRX.Event
+    public product_id : System.Int32
+    public product_name : System.String
+
+
+// event Product was removed from cart
+[Record] public sealed class ProductWasRemoved : CQRX.Event
+    public product_id : System.Int32
+
+
+[Record] public struct ProductInfo
+    public Id : System.Guid
+    public Name : System.String
+
+
+public module Cart
+    public Count(history: list[CQRX.Event]) : System.Int32
+        def init = 0
+        def step(s, e) 
+            match(e)
+                | ProductWasAdded => s + 1
+                | ProductWasRemoved => s - 1
+        CQRX.Projections.RunningAggregation(history, init, step)

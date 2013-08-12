@@ -1,0 +1,129 @@
+﻿#pragma indent
+
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+using CQRX.Structure
+
+
+            
+
+namespace CQRX.Nemerle
+           
+    public module Blocks
+        public ToString(lines: list[string]): string
+            lines.Aggregate("", (a, b)=>a+Environment.NewLine+b, _.TrimEnd())
+    
+        public Accumulate(blocks: list[Block], nextpad="": string) : list[string]
+            blocks.Map(_.Render(nextpad)).Flatten()
+
+            
+            
+    [Record] public class Block
+        public Lines : list[string]
+        public Blocks : list[Block] 
+        public AppendNewLine : bool
+        public override ToString() : String
+            Blocks.ToString(Render(""))
+            
+        internal Render(pad:string) : list[string]
+            match(Lines)
+                | [] => (Blocks.Accumulate(Blocks)).Map(pad + _) + if (AppendNewLine) [Environment.NewLine] else []
+                | _ => (Lines + Blocks.Accumulate(Blocks, "    ")).Map(pad + _) + if (AppendNewLine) [Environment.NewLine] else []
+                
+        internal SingleLine(): string { Lines.First() }                
+        internal Remainder(): list[string] { match (Lines) { _::ll=>ll } }
+
+
+    type NemerleIdentifier = string
+    type NemerleType = string
+
+    public variant Expression
+        | Constant { Value: string }
+        | MethodInvocation { Name: NemerleIdentifier; Bindings: list[NemerleIdentifier] }               
+        | Sequence { Expressions : list[Expression] }
+        | Def { Identifier: NemerleIdentifier; Bind : Expression }
+        | DefFn { Identifier: NemerleIdentifier; Parameters: list[NemerleIdentifier]; Bind : Expression }
+        | Match { Identifier : NemerleIdentifier; Matches : list[MatchCondition] }
+        | BinaryOperator { Left : Expression; Operator: String; Right: Expression }
+        
+    [Record] public struct MatchCondition
+        public Condition : NemerleType
+        public Expression : Expression
+            
+    [Record] public struct NemerleProperty
+        public Identifier : NemerleIdentifier
+        public Type : NemerleType            
+              
+    [Record] public struct Parameter
+        public Name: NemerleIdentifier
+        public Type: NemerleType
+    
+    public module Language        
+    
+        public NemerleSourceFile(): Block
+            Block(["#pragma indent","using System",""],[], true)
+            
+        public Namespace(identifier: NemerleIdentifier, contained: list[Block]): Block
+            Block([$"namespace $(identifier)"],contained, true)            
+            
+        public Module(identifier: NemerleIdentifier, contained: list[Block]): Block
+            Block([$"public module $(identifier)"],contained, true)                        
+            
+        public RecordStructProperty(f: NemerleProperty): Block
+            Block([$"public $(f.Identifier) : $(f.Type)"], [], false)
+    
+        public RecordStruct(identifier: NemerleIdentifier, properties: list[NemerleProperty], comments: list[string]): Block
+            def Fields = properties.Map(RecordStructProperty)
+            Block(comments + [$"[Record] public struct $(identifier)"], Fields, true)              
+            
+        public RecordClass(identifier: NemerleIdentifier, inherits: list[NemerleType], properties: list[NemerleProperty], comments: list[string]): Block
+            def Fields = properties.Map(RecordStructProperty)
+            def inheritstring = match(inherits)
+                | [] => ""
+                | _ => " : "+inherits.Aggregate("", (a,b)=>a+b+", ", _.TrimEnd(',',' '))
+                
+            Block(comments + [$"[Record] public sealed class $(identifier)$(inheritstring)"], Fields, true)                          
+                   
+        public GlobalFunction(identifier: NemerleIdentifier, resultType: NemerleType, parameters: list[Parameter], expression: Expression): Block          
+            def parline(ps, line="") 
+                def eval = x => $"$(x.Name): $(x.Type)"
+                match (ps)
+                    | [] => line
+                    | [x] => line+eval(x)
+                    | x :: xs => parline(xs, line + eval(x) + ", ")
+                    
+            Block([$"public $(identifier)($(parline(parameters))) : $(resultType)"],[RenderExpression(expression)],true)
+
+        RenderMatchCondition(m: MatchCondition): Block
+            def expr = RenderExpression(m.Expression)
+            Block([$"| $(m.Condition) => "+expr.SingleLine()],[Block(expr.Remainder(),expr.Blocks,false)],false)
+            
+        RenderExpression(e: Expression): Block
+            def parline(ps, line="")                 
+                match (ps)
+                    | [] => line
+                    | [x] => line+(x)
+                    | x :: xs => parline(xs, line + (x) + ", ")        
+                    
+            match (e)
+              | e is Expression.Constant => Block([e.Value],[],false)           
+              | e is Expression.MethodInvocation => Block([$"$(e.Name)($(parline(e.Bindings)))"],[],false)
+              | e is Expression.Sequence => Block([],e.Expressions.Map(RenderExpression),false)
+              | e is Expression.Def => 
+                def blocks = RenderExpression(e.Bind)
+                Block([$"def $(e.Identifier) = "+blocks.SingleLine()],[Block(blocks.Remainder(),blocks.Blocks,false)],false)
+              | e is Expression.DefFn => 
+                def blocks = RenderExpression(e.Bind)
+                Block([$"def $(e.Identifier)($(parline(e.Parameters))) "],[blocks],false)                
+              | e is Expression.Match => Block([$"match($(e.Identifier))"],e.Matches.Map(RenderMatchCondition),false)
+              | e is Expression.BinaryOperator => 
+                def lhs = RenderExpression(e.Left).SingleLine()
+                def rhs = RenderExpression(e.Right).SingleLine()
+                Block([$"$(lhs) $(e.Operator) $(rhs)"],[],false)
+              | _ => Block([$"/* UNKNOWN: $(e) */"],[],false)

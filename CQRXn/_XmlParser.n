@@ -1,0 +1,66 @@
+﻿/*#pragma indent
+using Nemerle
+using Nemerle.Collections
+using Nemerle.Text
+using Nemerle.Utility
+
+using System
+using System.Collections.Generic
+using System.Linq
+using System.Xml.Linq
+
+using CQRX.Structure
+
+namespace CQRXn
+  
+    public module XmlParser
+    
+        ParseEventField(e: XElement) : EventField
+            def Name=e.Attribute("name").Value
+            def Type=e.Attribute("type").Value
+            EventField(Name,Type)
+    
+        ParseEvent(e: XElement) : Event
+            def Name=e.Attribute("name").Value
+            def Description=e.Element("description").Value
+            def Fields=e.Elements("field").Map(ParseEventField)
+            Event(Name,Description,Fields)
+            
+        ParseRecordField(e: XElement) : RecordField
+            def Name=e.Attribute("name").Value
+            def Type=e.Attribute("type").Value
+            RecordField(Name,Type)
+    
+        ParseRecord(e: XElement) : Record
+            def Name=e.Attribute("name").Value
+            def Fields=e.Elements("field").Map(ParseRecordField)
+            Record(Name,Fields)            
+            
+        ParseAggregation(e: XElement) : Expression
+            Expression.Aggregation(AggregationDefinition("16"))
+            
+        ParseConstant(e: XElement) : Expression
+            Expression.Constant(e.Attribute("value").Value)
+            
+        ParseConcept(e: XElement) : Concept
+            def Name=e.Attribute("name").Value
+            def Type=e.Attribute("type").Value            
+            
+            def Expression = (e.Elements("constant").Map(ParseConstant)
+                            + e.Elements("aggregation").Map(ParseAggregation)
+                            ).Single()
+            
+            Concept(Name, Type, Expression)
+    
+        ParseModule(m: XElement) : Module            
+            def Name = m.Attribute("name").Value
+            def Events = m.Elements("event").Map(ParseEvent)        
+            def Records = m.Elements("record").Map(ParseRecord)
+            def Concepts = m.Elements("concept").Map(ParseConcept)
+            Module(Name, Events, Records, Concepts)
+  
+        public ParseFile(filename: string) : list[Module]       
+            XDocument.Load(filename).Elements("module").Map(ParseModule)
+                
+                
+*/

@@ -1,0 +1,29 @@
+﻿using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Console;
+using System.Linq;
+using System.Xml;
+using System.IO;
+using System.Xml.Serialization;
+
+
+
+module Program
+{
+
+    
+  Main() : void
+  {
+    def history = [ProductWasAdded(1, "Äpfel"),
+                   ProductWasAdded(2, "Bananen"),
+                   ProductWasRemoved(2)];
+
+    Console.WriteLine(Cart.Count(history));
+    
+    _ = ReadLine();
+  }
+}

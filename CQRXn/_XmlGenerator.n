@@ -1,0 +1,85 @@
+﻿#pragma indent
+using Nemerle
+using Nemerle.Collections
+using Nemerle.Text
+using Nemerle.Utility
+
+using System
+using System.Collections.Generic
+using System.Linq
+using System.Xml.Linq
+
+using CQRX.Structure
+
+namespace CQRXn
+  
+    public module XmlGenerator
+    
+    
+#region Events    
+        AsXml(f: EventField) : XElement
+            def Name = XAttribute("name", f.Name)
+            def Type = XAttribute("type", f.Type)
+            XElement("field",[Name,Type])
+    
+        AsXml(fields: list[EventField]) : list[XElement]
+            fields.Map(AsXml)    
+    
+        AsXml(e: Event) : XElement
+            def Name = XAttribute("name", e.Name)
+            def Description = XElement("description", e.Description)
+            def Fields = AsXml(e.Fields).Map(_:>object)
+            XElement("event",[Name,Description]+Fields)
+    
+        AsXml(events: list[Event]) : list[XElement]
+            events.Map(AsXml)
+#endregion            
+                        
+#region Records            
+        AsXml(f: RecordField) : XElement
+            def Name = XAttribute("name", f.Name)
+            def Type = XAttribute("type", f.Type)
+            XElement("field",[Name,Type])
+    
+        AsXml(fields: list[RecordField]) : list[XElement]
+            fields.Map(AsXml)    
+            
+        AsXml(r: Record) : XElement
+            def Name = XAttribute("name", r.Name)            
+            def Fields = AsXml(r.Fields).Map(_:>object)
+            XElement("record",[Name]+Fields)                        
+            
+        AsXml(records: list[Record]) : list[XElement]
+            records.Map(AsXml)            
+#endregion
+
+#region Concepts
+        AsXml(e: Expression) : XElement
+            match (e)
+                | e is Expression.Constant => XElement("constant", XAttribute("value", e.Value))
+                | e is Expression.Aggregation => XElement("aggregation", XAttribute("initial", e.Definition.Initial))
+
+        AsXml(e: Concept) : XElement
+            def Name = XAttribute("name", e.Name)
+            def Type = XAttribute("type", e.Type)
+            def Expression = AsXml(e.Expression)
+            XElement("concept",[Name,Type,Expression])
+            
+        AsXml(concepts: list[Concept]) : list[XElement]
+            concepts.Map(AsXml)      
+#endregion
+
+            
+        public AsXml(m: Module) : XElement            
+            def Name = XAttribute("name", m.Name)
+            def Events = AsXml(m.Events).Map(_:>object)
+            def Records = AsXml(m.Records).Map(_:>object)
+            def Concepts = AsXml(m.Concepts).Map(_:>object)
+            XElement("module", [Name]+Events+Records+Concepts)
+    
+        public AsString(m : Module) : string            
+            AsXml(m).ToString()
+                
+            
+                
+                

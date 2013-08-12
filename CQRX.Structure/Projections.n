@@ -1,0 +1,33 @@
+﻿#pragma indent
+
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace CQRX.Structure
+
+
+        
+    [Record] public struct Concept
+        public Name : string
+        public Type : ModelType
+        public Expression : Expression
+        
+    public variant Expression
+        | Inc
+        | Dec
+        | Constant { Value : string }
+        | Aggregation { Definition : AggregationDefinition }
+        
+    [Record] public struct AggregationDefinition
+        public Initial: Expression.Constant
+        public Projection: list[ProjectionExpression]
+        
+    [Record] public struct ProjectionExpression
+        public OnEvent: string
+        public Modification: Expression
+        

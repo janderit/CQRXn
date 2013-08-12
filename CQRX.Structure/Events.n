@@ -1,0 +1,30 @@
+﻿#pragma indent
+
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace CQRX.Structure
+
+           
+    [Record] public struct Event
+        public Name : string
+        public Description : string
+        public Fields : list[EventField]
+        
+        public override ToString() : string
+            $"Event: '$(Name)' ($(Description))"        
+        
+            
+    [Record] public struct EventField
+        public Name : string
+        public Type : ModelType        
+        
+        public override ToString() : string
+            $"Field: '$(Name)' : $(Type)"
+            
+            
